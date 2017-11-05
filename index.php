@@ -5,15 +5,7 @@ session_start();
 <html>
 
 <head>
-<!-- Global Site Tag (gtag.js) - Google Analytics -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=UA-107262286-1"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments)};
-  gtag('js', new Date());
 
-  gtag('config', 'UA-107262286-1');
-</script>
 
     <meta charset="utf-8" />
     <title>Test</title>
@@ -1355,7 +1347,7 @@ window.location.href = mytext; */
   _paq.push(['trackPageView']);
   _paq.push(['enableLinkTracking']);
   (function() {
-    var u="//192.168.1.101/piwik/";
+    var u="//<?php echo $_SERVER['HTTP_HOST'] ?>/piwik/";
     _paq.push(['setTrackerUrl', u+'piwik.php']);
     _paq.push(['setSiteId', '1']);
     var d=document, g=d.createElement('script'), s=d.getElementsByTagName('script')[0];

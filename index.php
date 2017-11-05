@@ -154,6 +154,7 @@ session_start();
             }
 
         function logAnswer(result, type, title, question, answer) {
+			trackEvent('question','answer',question,answer);
             myLog =  '"' + result + '"' + ';' + '"' + type + '"' + ';' + '"' + title + '"' + ';' + '"' + question + '"' + ';' + '"' + answer + '"';
             
 			myLog = {"result":result,"type":type,"title":title,"question":question,"answer":answer}

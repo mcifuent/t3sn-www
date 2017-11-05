@@ -1,0 +1,11 @@
+.nav-tabs {
+	
+	
+	display:none;
+	
+}
+
+a:link:after,
+    a:visited:after {
+        content: "" !important;
+    }

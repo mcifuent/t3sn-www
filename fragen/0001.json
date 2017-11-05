@@ -1,0 +1,45 @@
+﻿{
+				  "headline": "Mathetest",
+				  "id":2,
+				  "fragen": [
+					{
+					  "qid": 1,
+					  "head": "1+1",
+					  "type": "radio",
+					  "body": {
+						"a": "2",
+						"b": "3",
+						"c": "4",
+						"d": "5",
+						"e": "6"
+					  },
+					  "solution": "a",
+					  "hint": "Denke doch an..."
+					},
+					{
+					  "qid": 2,
+					  "head": "5% <sup><b>.</b></sup> 120",
+					  "type": "radio",
+					  "body": {
+						"a": "4",
+						"b": "6",
+						"c": "14"
+					  },
+					  "solution": "b",
+					  "hint": "Denke doch an..."
+					},
+					 {
+					  "qid": 3,
+					  "head": "Meine Leute",
+					  "type": "radio",
+					  "body": {
+						"a": "Eins",
+						"b": "Zwei",
+						"c": "Drei",
+						"d": "4"
+					  },
+					  "solution": "b",
+					  "hint": "OK?"
+					}
+				  ]
+				}

@@ -1,0 +1,2 @@
+﻿
+{"headline":"Umfrage zu ...","id":1474386839089,"fragen":[{"qid":0,"head":"Wie viel sind 2 x 10?","type":"radio","body":{"a":" 40","b":" 60","c":"20","d":""},"solution":"c","hint":"Was ist denn 10 + 10?<br>","ok":"Gut. Weiter geht's...<br>"},{"qid":1,"head":"4 Arbeiter brauchen 6 Tage, um ein Haus zu streichen.<br>Wie lange brauchen 3 Arbeiter?<br>","type":"radio","body":{"a":"4 Tage","b":"4,5 Tage","c":"5 Tage","d":"keine Antwort ist richtig"},"solution":"d","hint":"Wie lange braucht denn 1 Arbeiter?<br>","ok":"Sehr gut!<br>"}]}

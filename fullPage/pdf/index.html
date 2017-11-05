@@ -1,0 +1,978 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale = 1.0, maximum-scale = 1.0, user-scalable=no">
+
+<script src="http://cdnjs.cloudflare.com/ajax/libs/processing.js/1.4.1/processing-api.min.js"></script><html>
+<!--
+  Created using jsbin.com
+  Source can be edited via http://jsbin.com/pdfjs-helloworld-v2/8598/edit
+-->
+
+</head>
+
+
+<body>
+
+<script src="//mozilla.github.io/pdf.js/build/pdf.js"></script>
+
+<div id="head" class="normal"><span>Geladene Seiten: <span id="page_num"></span> / <span id="page_count"></span></span>
+<input type="file" id="file-to-upload" accept="application/pdf" />
+<span>Ausgewähltes Seitenset/Abschnitt: <span id="active_page"></span> / <span id="active_section"></span></span>
+<span>Name: <span id="active_name"></span> </span>
+
+<span>Punkte:  <span id="page_points"></span> von <span id="page_maxpoints"></span> (<span id="page_grade"></span>) </span>
+
+
+
+<span id="normal"> NORMAL</span>
+
+<span id="comparison"> COMPARE</span>
+
+<span id="save">SAVE</span>
+
+<span id="load">LOAD</span>
+
+</div>
+
+
+
+<!--
+<h1>PDF.js Previous/Next example</h1>
+
+<div>
+<input type="file" id="file-to-upload" accept="application/pdf" />
+  <button id="prev">Previous</button>
+  <button id="next">Next</button>
+  &nbsp; &nbsp;
+  <span>Page: <span id="page_num"></span> / <span id="page_count"></span></span>
+</div>
+-->
+
+<canvas id="the-canvas" style="display:none"></canvas>
+
+<div id="myimg"></div>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
+<script src="http://code.jquery.com/mobile/1.4.5/jquery.mobile-1.4.5.min.js"></script>
+
+
+  <script type="text/javascript">
+  var PDF_URL = "filename";
+	var PDF_NAME = null;
+	var PDF_LASTMOD = null;
+	var NUM_PAGESETS = null;
+  
+  function readPDF(inUrl) {
+  
+  /**
+ * Asynchronously downloads PDF.
+ */
+	PDFJS.getDocument(inUrl).then(function(pdfDoc_) {
+
+	pdfDoc = pdfDoc_;
+  
+
+  
+	document.getElementById('page_count').textContent = pdfDoc.numPages;
+
+	  // Initial/first page rendering
+	  renderPage(pageNum);
+});
+  
+  }
+  
+  $("#file-to-upload").on('change', function() {
+	// Validate whether PDF
+    if(['application/pdf'].indexOf($("#file-to-upload").get(0).files[0].type) == -1) {
+        alert('Error : Not a PDF');
+        return;
+    }
+
+	$("#upload-button").hide();
+
+	// Send the object url of the pdf
+	//showPDF(URL.createObjectURL($("#file-to-upload").get(0).files[0]));
+	//console.log($("#file-to-upload").get(0).files[0]);
+	PDF_NAME = $("#file-to-upload").get(0).files[0].name;
+	PDF_LASTMOD = $("#file-to-upload").get(0).files[0].lastModified;
+	PDF_URL = URL.createObjectURL($("#file-to-upload").get(0).files[0]);
+	
+	
+	
+	
+	readPDF(PDF_URL);
+	
+});
+
+var MarkToolJSON;
+
+function getJSONbyFilename (infilename) {
+
+    MarkToolJSON = $.parseJSON (localStorage.getItem ("myMarkTool"));
+   // console.log(MarkToolJSON);
+
+	myreturn = false;
+	$.each(MarkToolJSON.files, function(key, value) {
+
+//	console.log(value.name);
+	//console.log(infilename);
+	if (value.name == infilename) { 
+	myreturn = value;
+	
+	}
+
+	});
+
+
+return myreturn;
+}
+  
+  $('#save').click(function() {
+         var myJSON = getJSONbyFilename(PDF_NAME);
+         if(myJSON) {
+  
+		  myClonedNode =  $('#myimg').clone();
+		  
+		  myClonedNode.find('img').remove();
+		  
+		  myConfig = myClonedNode.html();
+		  
+		 // myContent = myContent + myContent + myContent + myContent + myContent +myContent + myContent;
+		  
+		  myJSON.configuration = myConfig;
+		  
+		  localStorage.setItem("myMarkTool", JSON.stringify(MarkToolJSON));
+		
+		  } else {
+		  alert('Bitte Abschnitte festlegen');
+		  window.location.href ="./setSections/";
+		  }
+  });
+  
+    $('#load').click(function() {
+  
+          var myJSON = getJSONbyFilename(PDF_NAME);
+		
+		  
+		  $(myJSON.configuration).each(function() {
+		  $('[mypageset="'+$(this).attr('mypageset')+'"][mysection="'+$(this).attr('mysection')+'"]').find("[mypagesetref]").remove();
+		  $('[mypageset="'+$(this).attr('mypageset')+'"][mysection="'+$(this).attr('mysection')+'"]').append($(this).children());
+		  });
+
+  }); 
+  
+/* ALT */  
+// If absolute URL from the remote server is provided, configure the CORS
+// header on that server.
+
+var COMPARISON = false;
+
+var url = './Zertifikate.pdf';
+url ="blob:http://localhost/215d1083-c26b-492e-be37-d2dda043cbc6";
+// The workerSrc property shall be specified.
+PDFJS.workerSrc = '//mozilla.github.io/pdf.js/build/pdf.worker.js';
+
+var pdfDoc = null,
+    pageNum = 1,
+    pageRendering = false,
+    pageNumPending = null,
+    scale = 2,
+    canvas = document.getElementById('the-canvas'),
+    ctx = canvas.getContext('2d');
+
+/**
+ * Get page info from document, resize canvas accordingly, and render page.
+ * @param num Page number.
+ */
+function renderPage(num) {
+  pageRendering = true;
+  // Using promise to fetch the page
+  pdfDoc.getPage(num).then(function(page) {
+    var viewport = page.getViewport(scale);
+    canvas.height = viewport.height;
+    canvas.width = viewport.width;
+
+    // Render PDF page into canvas context
+    var renderContext = {
+      canvasContext: ctx,
+      viewport: viewport
+    };
+    var renderTask = page.render(renderContext);
+
+    // Wait for rendering to finish
+    renderTask.promise.then(function() {
+	
+      pageRendering = false;
+	  
+	  //CiM - Canvas2img
+	  myAppend(num);
+      
+	  
+	  if (pageNumPending !== null) {
+        // New page rendering is pending
+        renderPage(pageNumPending);
+        pageNumPending = null;
+      }
+    });
+  });
+
+ 
+  
+  
+  function myAppend(num) {
+  var splits = 6;
+  var docWidth = $('canvas').width();
+  var docHeight = $('canvas').height();
+  
+  var myJSON = getJSONbyFilename(PDF_NAME);
+  
+  var preSplit = 0;
+  var mypageset;
+  var i= 0;
+
+
+	
+	configpageset = myJSON.pages.length;
+	
+	console.log('num:' + num);
+	console.log('div' + num/configpageset);
+	mypageset = Math.floor((num-1)/configpageset) + 1 ;
+	 
+	NUM_PAGESETS = 	mypageset;
+	
+	mypageindex = (num-1)%configpageset ;
+	
+
+	
+	
+	
+	
+	console.log('index:' + mypageindex);
+	console.log('i:' + i);
+	console.log('pageset:' + mypageset);
+	
+	
+	
+  var splitPoints = myJSON.pages[mypageindex].sections;
+  //Cim: Damit auch das Ende erfasst wird...
+  splitPoints.push(docHeight);
+  
+  //Vorherige Abschnitte innerhalb eines Pagesets (Seitenmappe) werden gezählt
+  if(mypageindex != 0) {
+   
+   console.log('configpageset:'+ configpageset);
+  
+  for (y= (mypageindex-1) ; y>=0 ; y--) {
+    console.log('y:'+ y);
+	if(myJSON.pages[y]) {
+	i= i + myJSON.pages[y].sections.length + 1; 
+	
+	}
+   
+   }
+   i= i + 1;
+  } 
+  //Abschnitt beginnt mit 1
+  else {
+  
+  i=1;
+  }
+  console.log('i:'+ i);
+  console.log('-------------' );
+  /*legacy
+  for (i = 0; i<splits; i++) {
+			//CROP
+
+			var imageData = ctx.getImageData(0, i * $('canvas').height()/splits, docWidth, $('canvas').height()/splits  );
+
+			var canvas1 = document.createElement("canvas");
+			canvas1.id = "myca";
+			canvas1.width = docWidth;
+			canvas1.height = $('canvas').height()/splits;
+			var ctx1 = canvas1.getContext("2d");
+			ctx1.rect(0, 0, docWidth, 500);
+			ctx1.fillStyle = 'black';
+			ctx1.fill();
+			ctx1.putImageData(imageData, 0, 0);
+          //  console.log (i);
+		  //	console.log(canvas1.toDataURL());
+		 // myURL = JSON.stringify(url);
+		 
+		  
+		  if (num == 1){
+			$('#myimg').append($('<div mypageset="'+num+'" mysection="'+i+'" class="wrapper"><img src="'+canvas1.toDataURL()+'"/></div>'));
+			}
+			else {
+			
+			$('#myimg').find('[mypageset="'+parseInt(num -1.0)+'"][mysection="'+i+'"]').after($('<div mypageset="'+num+'" mysection="'+i+'" class="wrapper"><img   src="'+canvas1.toDataURL()+'"/></div>').hide());
+			
+			//$('#myimg').append($('<img mypageset="'+num+'" mysection="'+i+'" src="'+canvas1.toDataURL()+'"/>').hide());
+			}
+			//myJSON.slides.push(canvas1.toDataURL());
+			$('#myca').remove();
+			
+			
+			imageData = null;
+			}
+  */
+  
+ 
+  
+  $.each(splitPoints ,function(key,value) {
+  
+  var imageData = ctx.getImageData(0, preSplit, docWidth, value -  preSplit );
+  
+  
+  var canvas1 = document.createElement("canvas");
+			canvas1.id = "myca";
+			canvas1.width = docWidth;
+			canvas1.height = value - preSplit;
+			var ctx1 = canvas1.getContext("2d");
+			ctx1.rect(0, 0, docWidth, 500);
+			ctx1.fillStyle = 'black';
+			ctx1.fill();
+			ctx1.putImageData(imageData, 0, 0);
+          //  console.log (i);
+		  //	console.log(canvas1.toDataURL());
+		 // myURL = JSON.stringify(url);
+		 
+		  
+		  if (mypageset == 1){
+			$('#myimg').append($('<div mypageset="'+mypageset+'" mysection="'+i+'" class="wrapper"><img src="'+canvas1.toDataURL()+'"/></div>'));
+			}
+			else {
+			
+			$('#myimg').find('[mypageset="'+parseInt(mypageset -1.0)+'"][mysection="'+i+'"]').after($('<div mypageset="'+mypageset+'" mysection="'+i+'" class="wrapper"><img   src="'+canvas1.toDataURL()+'"/></div>').hide());
+			
+		
+			}
+		
+			$('#myca').remove();
+			
+			
+			imageData = null;
+  
+  
+  preSplit = value;
+  i++;
+  });
+  
+
+  
+  
+  //Es wird die nächste Seite augerufen...
+  if (pageNum < pdfDoc.numPages) {onNextPage();}
+  else  {
+  //Cim: quasi document.ready().....
+  $('canvas').hide();
+  
+  
+  $('#comparison').click(function() {
+  
+   if (COMPARISON == false) { COMPARISON = true; 
+	  comparePages($('#active_section').text());
+	  $('#comparison').text('NORMAL');
+  }
+  else  { 
+	  COMPARISON = false;
+	  loadFullPage($('[mypageset="'+$('#active_page').text()+'"]'));
+      $('#comparison').text('COMPARE');
+  }
+  
+  showPoints($('[mypageset="'+$('#active_page').text()+'"]'));
+  //alert($('#active_section').text());
+  });
+  
+  
+ 
+  
+  $('.wrapper').click(function() {
+  //alert('activate');
+  activateSection(this);
+  });
+  
+   $('.wrapper').dblclick(function() {
+   
+  loadFullPage(this);
+  });
+  
+  //ALTERNATIVE
+  
+  $('#normal').click(function() {
+     showPoints($('[mypageset="'+$('#active_page').text()+'"]'));
+  loadFullPage($('[mypageset="'+$('#active_page').text()+'"]'));
+  });
+  
+  $('.wrapper img').swipeleft(function(e) { 
+  
+ 
+  
+  mySibling = null;
+
+  
+  
+if (COMPARISON == false) {
+ if (NUM_PAGESETS == 1 ) return false;
+
+  if ($(this).parent().attr('mypageset') != NUM_PAGESETS ) {
+	 
+	mySibling =	 $(this).parent().next('[mysection="'+$(this).parent().attr('mysection')+'"]');
+
+
+	  
+  }
+  else {
+  
+  mySibling=  $(this).parent().siblings(' [mysection="'+$(this).parent().attr('mysection')+'"]:first');
+
+	  
+  
+  }
+  
+
+	}
+	else {
+	
+	
+	nextSection = parseInt($(this).parent().attr('mysection')) + 1.0;
+	
+	if($('[mypageset="'+$(this).parent().attr('mypageset')+'"]:last').attr('mysection') == $(this).parent().attr('mysection') ) {
+	nextSection = 1;
+	}
+	
+
+		mySibling =	 $('[mypageset="'+$(this).parent().attr('mypageset')+'"][mysection="'+nextSection+'"]');
+
+	comparePages(nextSection);
+	
+	}
+  $(this).parent().hide();
+   mySibling.show();
+   activateSection(mySibling);
+	//e.preventDefault();
+  
+  });
+  $('.wrapper img').swiperight(function() {
+ 
+  mySibling = null;
+  
+  if (COMPARISON == false) {
+   if (NUM_PAGESETS == 1 ) return false;
+  if ($(this).parent().attr('mypageset') == 1 ) {
+	mySibling = $(this).parent().siblings('[mysection="'+$(this).parent().attr('mysection')+'"]:last');
+	
+	  
+  }
+  else {
+  
+    mySibling = $(this).parent().prev(' [mysection="'+$(this).parent().attr('mysection')+'"]');
+	  
+  
+  }
+  
+  }
+  else {
+  
+  nextSection = parseInt($(this).parent().attr('mysection')) - 1.0;
+	
+	if($('[mypageset="'+$(this).parent().attr('mypageset')+'"]:first').attr('mysection') == $(this).parent().attr('mysection') ) {
+	nextSection = $('[mypageset="'+$(this).parent().attr('mypageset')+'"]:last').attr('mysection');
+	}
+	
+
+		mySibling =	 $('[mypageset="'+$(this).parent().attr('mypageset')+'"][mysection="'+nextSection+'"]');
+
+	comparePages(nextSection);
+  
+  
+  
+  }
+  $(this).parent().hide();
+  mySibling.show();
+  activateSection(mySibling);
+  
+  
+  
+  
+  });
+
+  }
+  
+  
+  }
+  
+  // Update page counters
+  document.getElementById('page_num').textContent = pageNum;
+}
+
+
+function prepareURL (inURL) {
+
+
+return inURL.replace('.','').replace('/','');
+}
+
+
+function activateSection(node) {
+
+
+
+ $('.wrapper').removeClass("active");
+  $(node).addClass("active");
+  $('#active_page').text($(node).attr('mypageset'));
+  $('#active_section').text($(node).attr('mysection'));
+  
+  appendElement('page_name', node);
+  appendElement('section_task', node);
+  appendElement('section_comment', node);
+  appendElement('section_point', node);
+  appendElement('section_maxpoint', node);
+  
+   
+//showSectionInformation(node);
+ showALLSectionInformation();   
+showPoints(node);
+	$('#active_name').text($(node).find('.page_name').text());
+}
+
+function appendElement(inclass,node) {
+if($(node).find('.' + inclass).length == 0) {
+
+//CiM: Bedingung vorschalten....?
+  
+//  $('.'+inclass).hide();
+  
+  
+  
+  sp = $(node).append('<div class="'+inclass+'"  mypagesetref="'+$(node).attr('mypageset')+'"  contenteditable="true"></div>');
+ 
+  $(sp).find('.'+inclass).swipeleft(function () {
+ // var mySiblingSectionCounter = $(this).parent().attr('mysection');
+   var myHelpPage =$(this).attr('mypagesetref') ;
+  
+  
+   if (myHelpPage == $(this).parent().attr('mypageset')) {
+			$(this).attr('inittext',$(this).text());
+		  }
+		  
+		  
+		  if  (myHelpPage == NUM_PAGESETS ) {
+		   myHelpPage = 0;
+		 
+		   }
+
+   
+		
+		   
+		   
+		   var nextpage = parseInt (myHelpPage) + 1 ;
+		   $(this).attr('mypagesetref',nextpage);
+		   
+		   //console.log(nextpage);
+		   if (nextpage == $(this).parent().attr('mypageset')) {
+			$(this).text($(this).attr('inittext'));
+		   }
+		   
+		   else {
+			$(this).text($('[mysection="'+$(this).parent().attr('mysection')+'"][mypageset="'+nextpage+'"] '+ '.'+ inclass).text());
+		   
+		   }
+   
+  }
+  
+  
+  
+  
+  );
+  
+  
+  
+  
+  
+  $(sp).find('.' + inclass).swiperight(function () {
+ // var mySiblingSectionCounter = $(this).parent().attr('mysection');
+   var myHelpPage =$(this).attr('mypagesetref') ;
+  
+		  if  (myHelpPage == 1 ) {
+		   myHelpPage = NUM_PAGESETS + 1;
+		 
+		   }
+
+   
+		 if (myHelpPage == $(this).parent().attr('mypageset')) {
+			$(this).attr('inittext',$(this).text());
+		  }
+		   
+		   
+		   var nextpage = parseInt (myHelpPage) - 1 ;
+		   $(this).attr('mypagesetref',nextpage);
+		   
+		   //console.log(nextpage);
+		   if (nextpage == $(this).parent().attr('mypageset')) {
+			$(this).text($(this).attr('inittext'));
+		   }
+		   
+		   else {
+			$(this).text($('[mysection="'+$(this).parent().attr('mysection')+'"][mypageset="'+nextpage+'"] '+'.'+inclass).text());
+		   
+		   }
+   
+  }
+  
+  
+  
+  
+  );
+  
+ 
+  
+  
+   }
+    else {
+	//CiM Bedingung vorschalten...?
+  
+  //  $('.' + inclass).hide();
+
+  $(node).find('.' + inclass).show();
+   
+   }
+  
+
+
+}
+
+
+function showALLSectionInformation() {
+
+  $('[mypageset]').each(function() {
+    $('[mysection="'+$(this).attr('mysection')+'"]').find('.section_maxpoint').text($('[mypageset="1"][mysection="'+$(this).attr('mysection')+'"]').find('.section_maxpoint').text());
+ 
+   $('[mysection="'+$(this).attr('mysection')+'"]').find('.section_task').text($('[mypageset="1"][mysection="'+$(this).attr('mysection')+'"]').find('.section_task').text());
+   
+   $('[mypageset="'+$(this).attr('mypageset')+'"]').find('.page_name').text($('[mypageset="'+$(this).attr('mypageset')+'"][mysection="1"]').find('.page_name').text());
+  
+  
+  
+  });
+
+
+};
+
+function showSectionInformation(node) {
+  $('[mysection="'+$(node).attr('mysection')+'"]').find('.section_maxpoint').text($('[mypageset="1"][mysection="'+$(node).attr('mysection')+'"]').find('.section_maxpoint').text());
+ 
+   $('[mysection="'+$(node).attr('mysection')+'"]').find('.section_task').text($('[mypageset="1"][mysection="'+$(node).attr('mysection')+'"]').find('.section_task').text());
+   
+   $('[mypageset="'+$(node).attr('mypageset')+'"]').find('.page_name').text($('[mypageset="'+$(node).attr('mypageset')+'"][mysection="1"]').find('.page_name').text());
+
+};
+
+
+function showPoints(node) {
+var myCounter = 0;
+var myMaxPoints = 0;
+$('[mypageset="'+$(node).attr('mypageset')+'"]').each(function () {
+
+myorigin = $(this).find('.section_point').text().replace(',','.');
+myparsed = parseFloat($(this).find('.section_point').text().replace(',','.'));
+
+//console.log($(this).find('.section_point').text().replace(',','.'));
+if (myorigin == myparsed) {
+    myCounter = myCounter + myparsed;
+ }
+
+ 
+});
+
+
+$('[mypageset="1"]').each(function () {
+
+myorigin = $(this).find('.section_maxpoint').text().replace(',','.');
+myparsed = parseFloat($(this).find('.section_maxpoint').text().replace(',','.'));
+
+//console.log($(this).find('.section_point').text().replace(',','.'));
+if (myorigin == myparsed) {
+    myMaxPoints = myMaxPoints + myparsed;
+ }
+
+ 
+});
+
+
+
+
+$('#page_points').text(myCounter);
+$('#page_maxpoints').text(myMaxPoints);
+
+$('#page_grade').text(calculateGrade(myCounter,myMaxPoints ));
+}
+
+function loadFullPage(node) {
+   $('[mypageset]').hide();
+   $('[mypageset="'+$(node).attr('mypageset')+'"]').show();
+}
+
+function comparePages(section) {
+   $('[mypageset]').hide();
+   $('[mysection="'+section+'"]').show();
+   $('[mysection="'+section+'"]').find('.section_point').show();
+    $('[mysection="'+section+'"]').find('.section_comment').show();
+}
+
+
+function calculateGrade(input1, input2) {
+
+
+
+//auf 0,5 gerundet
+
+result = Math.round10((input1/input2),-2);
+
+if (result >= 0.92) myreturn = "sehr gut";
+else if (result >= 0.81) myreturn = "gut";
+else if (result >= 0.67) myreturn = "befriedigend";
+else if (result >= 0.50) myreturn = "ausreichend";
+else if (result >= 0.30) myreturn = "mangelhaft";
+else if (result >= 0.0) myreturn = "ungenügend";
+else myreturn = "undefined";
+
+return myreturn + ' (' +  result+')';
+
+}
+
+/**
+ * If another page rendering in progress, waits until the rendering is
+ * finised. Otherwise, executes rendering immediately.
+ */
+function queueRenderPage(num) {
+  if (pageRendering) {
+    pageNumPending = num;
+  } else {
+    renderPage(num);
+  }
+}
+
+/**
+ * Displays previous page.
+ */
+function onPrevPage() {
+  if (pageNum <= 1) {
+    return;
+  }
+  pageNum--;
+  queueRenderPage(pageNum);
+}
+//document.getElementById('prev').addEventListener('click', onPrevPage);
+
+/**
+ * Displays next page.
+ */
+function onNextPage() {
+  if (pageNum >= pdfDoc.numPages) {
+    return;
+  }
+  pageNum++;
+  queueRenderPage(pageNum);
+}
+//document.getElementById('next').addEventListener('click', onNextPage);
+
+
+
+
+
+
+
+
+
+//3rd-Party...........................................................
+// Closure
+(function() {
+  /**
+   * Decimal adjustment of a number.
+   *
+   * @param {String}  type  The type of adjustment.
+   * @param {Number}  value The number.
+   * @param {Integer} exp   The exponent (the 10 logarithm of the adjustment base).
+   * @returns {Number} The adjusted value.
+   */
+  function decimalAdjust(type, value, exp) {
+    // If the exp is undefined or zero...
+    if (typeof exp === 'undefined' || +exp === 0) {
+      return Math[type](value);
+    }
+    value = +value;
+    exp = +exp;
+    // If the value is not a number or the exp is not an integer...
+    if (isNaN(value) || !(typeof exp === 'number' && exp % 1 === 0)) {
+      return NaN;
+    }
+    // Shift
+    value = value.toString().split('e');
+    value = Math[type](+(value[0] + 'e' + (value[1] ? (+value[1] - exp) : -exp)));
+    // Shift back
+    value = value.toString().split('e');
+    return +(value[0] + 'e' + (value[1] ? (+value[1] + exp) : exp));
+  }
+
+  // Decimal round
+  if (!Math.round10) {
+    Math.round10 = function(value, exp) {
+      return decimalAdjust('round', value, exp);
+    };
+  }
+  // Decimal floor
+  if (!Math.floor10) {
+    Math.floor10 = function(value, exp) {
+      return decimalAdjust('floor', value, exp);
+    };
+  }
+  // Decimal ceil
+  if (!Math.ceil10) {
+    Math.ceil10 = function(value, exp) {
+      return decimalAdjust('ceil', value, exp);
+    };
+  }
+})();
+
+
+
+
+
+  </script>
+  
+
+<style >
+
+body {
+
+font-family: Arial;
+}
+
+#myimg {
+position: absolute;
+top: 50px;
+}
+img {width:100%;
+border: 2px solid black;
+margin-bottom: -5px;
+}
+
+#head {
+width: 100%;
+position:fixed;
+z-index:100;
+top:0px;
+left:0px;
+min-height:3em;
+background-color:lightgrey;
+}
+
+.active {
+border: 3px solid red;
+
+}
+
+img{
+border: none;
+
+}
+
+[mypagesetref] {
+border: 1px solid grey;
+    line-height: 2em;
+    min-height: 2em;
+		display: inline-block;
+}
+
+.wrapper {
+height:100%;
+}
+.section_point {
+  
+    width: 20%;
+
+
+     border: 1 px solid green;
+	 text-align:center;
+	 background-color: lightgreen;
+	
+
+}
+
+
+[mysection="1"] .page_name  {
+background-color: white;
+color:black;
+
+}
+
+.page_name {
+  
+    width: 15%;
+
+  
+	 text-align:center;
+	 background-color: #8B90E8;
+	 color: white;
+	 font-weight: bold;
+
+
+}
+
+.section_task {
+  
+    width: 10%;
+   
+	 text-align:center;
+	 background-color: #E8CC7F;
+	 color: white;
+	 font-weight: bold;
+
+
+}
+
+[mypageset="1"] .section_task  {
+border: 1px solid #E8CC7F;
+background-color: white;
+color:black;
+
+}
+
+
+.section_maxpoint {
+  
+    width: 10%;
+    
+	 text-align:center;
+	 background-color: #9FFFA5;
+	 color: white;
+	 font-weight: bold;
+
+
+}
+
+[mypageset="1"] .section_maxpoint  {
+background-color: white;
+color:black;
+border: 1px solid #9FFFA5;
+}
+
+.section_comment {
+    width: 38%;
+	border: 1 px solid green;
+	background-color: lightgrey;
+	padding-left: 2%;
+	
+
+}
+
+.ui-loader {
+display:none;
+}
+
+</style>
+<script>
+</script>
+</body>
+</html>

@@ -154,7 +154,7 @@ session_start();
             }
 
         function logAnswer(result, type, title, question, answer) {
-			_paq.push(['trackEvent','question','answer',question,answer]);
+			_paq.push(['trackEvent','questions',question,answer]);
             myLog =  '"' + result + '"' + ';' + '"' + type + '"' + ';' + '"' + title + '"' + ';' + '"' + question + '"' + ';' + '"' + answer + '"';
             
 			myLog = {"result":result,"type":type,"title":title,"question":question,"answer":answer}

@@ -13,7 +13,7 @@ define('CHARSET', 'utf8');
 else  {
 define('HOST', 'localhost'); // Database host name ex. localhost
 define('USER', 'root'); // Database user. ex. root ( if your on local server)
-define('PASSWORD', 'secret'); // Database user password  (if password is not set for user then keep it empty )
+define('PASSWORD', 'root.t3sn'); // Database user password  (if password is not set for user then keep it empty )
 define('DATABASE', 'k1'); // Database name
 define('CHARSET', 'utf8');	
 

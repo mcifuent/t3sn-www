@@ -721,6 +721,10 @@ DisableRedirections=False\r\n';
                 myinitbody(myStartFrage);
             });
 
+if ((getUrlParameter("unsetcounter"))) {
+myRestartCounter(0);
+}
+
 			
 			function myPrev(myThis) {
 				//	alert('yaeh');

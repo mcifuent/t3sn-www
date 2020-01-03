@@ -7,6 +7,7 @@ session_start();
 <head>
 
 
+
     <meta charset="utf-8" />
     <title>Test</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -17,6 +18,7 @@ session_start();
     <script type="text/javascript" src="js/jquery-1.10.2.min.js"></script>
 
     <script type="text/javascript" src="js/jquery-sortable-min.js"></script>
+	<script type="text/javascript" src="js/qrcode.min.js"></script>
     <script type="text/javascript" src="js/table-sort.js"></script>
     <script type="text/javascript" src="bootstrap/js/bootstrap.min.js"></script>
     <script>
@@ -112,7 +114,42 @@ session_start();
         }
 
 		
+//Hilfsfunktion Levenshtein Distanz
 
+// Compute the edit distance between the two given strings
+function getEditDistance(a, b) {
+  if (a.length === 0) return b.length; 
+  if (b.length === 0) return a.length;
+
+  var matrix = [];
+
+  // increment along the first column of each row
+  var i;
+  for (i = 0; i <= b.length; i++) {
+    matrix[i] = [i];
+  }
+
+  // increment each column in the first row
+  var j;
+  for (j = 0; j <= a.length; j++) {
+    matrix[0][j] = j;
+  }
+
+  // Fill in the rest of the matrix
+  for (i = 1; i <= b.length; i++) {
+    for (j = 1; j <= a.length; j++) {
+      if (b.charAt(i-1) == a.charAt(j-1)) {
+        matrix[i][j] = matrix[i-1][j-1];
+      } else {
+        matrix[i][j] = Math.min(matrix[i-1][j-1] + 1, // substitution
+                                Math.min(matrix[i][j-1] + 1, // insertion
+                                         matrix[i-1][j] + 1)); // deletion
+      }
+    }
+  }
+
+  return matrix[b.length][a.length];
+};
 
         myStartFrage = 0;
 
@@ -158,7 +195,9 @@ session_start();
             myLog =  '"' + result + '"' + ';' + '"' + type + '"' + ';' + '"' + title + '"' + ';' + '"' + question + '"' + ';' + '"' + answer + '"';
             
 			myLog = {"result":result,"type":type,"title":title,"question":question,"answer":answer}
-			console.log(myLog);
+			//console.log(myLog);
+			//alert (getEditDistance('Peter Masche','Peter Flasche'));
+			
 
             $.post("./insertAnswer.php", {
                 "code": code,
@@ -166,7 +205,26 @@ session_start();
                 "session": session,
 				"token": token
             });
+
+
         }
+
+
+    function insertPoints( question,  points, comment) {
+            
+		
+
+   	$.post("./insertPoints.php", {
+                "code": code,
+                "text": question,
+                "session": session,
+		"token": token,
+		"comment": comment,
+		"points": points
+            });
+
+        }
+
 
         myVar = {
             "id": 2,
@@ -293,22 +351,19 @@ session_start();
 			
 			 $.getJSON("./getText.php?code=" + code + '&ts=' + Date.now(), function(json) {
          
-                    myCheckVar =  convertMultilineJSON(json);
+                   myCheckVar =  convertMultilineJSON(json);
 					//alert($('#headwrite').val());
-					//alert(myCheckVar.fragen.length);
+				//alert(myCheckVar.fragen.length);
 
-				if ( myCheckVar.fragen.length > myVar.fragen.length) {
-				alert('Es ist ein Unterschied aufgefallen - es arbeitet anscheinend eine weitere Person an den Fragen. Die Frage '+ (myStartFrage +1) + ' wird von Ihnen überschrieben.' );
-				
-				
-				
-				
-				}
-				myVar = myCheckVar;
+			
+
+                myVar = myCheckVar;
+
+
 				myVar.fragen[myStartFrage] = myObject;
 			
 
-           if (input) {
+           if (input) { //sehr selten der Fall
                 //alert(input);
                 $.post("./update.php", {
                     "code": code,
@@ -346,7 +401,7 @@ session_start();
 				}
 
 
-                });
+               });
 
           
 
@@ -360,8 +415,12 @@ session_start();
 
             //alert(myVar);
             myCode = $.trim(window.location.href.replace('#offlinearea', '').replace('setsuperuser', '_'));
-            $('#linkText').html("<a target=\"_blank\" href=\"" + myCode + "\">  <img class=\"qr-code\" src=\"http://qrickit.com/api/qr?d=" + encodeURIComponent ( myCode) + "\" /></a> ");
-            $('#linkText').append("<p>" + myCode + "</p>");
+			
+
+
+           $('#linkText').html("<a target=\"_blank\" href=\"" + myCode + "\" id=\"qrcode\">  </a> ");
+           $('#linkText').append("<p>" + myCode + "</p>");
+		   new QRCode(document.getElementById("qrcode"), myCode);
         }
 
         setLSCounter = function(counter, ok, nok) {
@@ -461,7 +520,7 @@ session_start();
 
             });
 $('#clickhome').click(function() {
-	 $('#clicksave').parent().show();
+	// $('#clicksave').parent().show();
 	 myinitbody(myStartFrage);
 	
 });
@@ -471,7 +530,7 @@ $('#clickhome').click(function() {
                 var rows = "";
                 $.each(myVar.fragen, function(s, w) {
 
-                    if (myVar.fragen[s].head) {
+                    if (myVar.fragen[s]) {
 
                         myAnswers = "";
                         $.each(myVar.fragen[s].choice, function(k, v) {
@@ -640,6 +699,11 @@ $('.CE').prop("contentEditable", false);
 
 
                     });
+					
+					if (w.elements == "text" || w.elements == "both" ){
+						     myText += '<tr  style="padding:40px;  border-bottom: 1px solid #ddd; line-height:60px;"><td style="border: 1px solid #ddd; width:34px;  padding:8px; text-align:center; ">...</td><td  style="  min-width:15px; min-height:20px; padding:8px;"></td></tr>';
+                       
+					}  
 
                     myText += '</tbody></table>';
                     myText += '</div>';
@@ -652,6 +716,65 @@ $('.CE').prop("contentEditable", false);
 
 
             });
+
+
+
+
+    $('#clickresults2').click(function() {
+              
+                    
+				  $('#offlinetext').html('Punkte werden geladen...');
+		
+					$.get('./getPoints.php?code='+code,function(data) {
+							
+						
+					$('#offlinetext').html('<a id="myDownloadExcel2" class="noprint">Excel-Verbindungsdatei</a>  ');
+						
+							$('#offlinetext').append(data.replace('<table>','<table id="myResults">'));
+
+			
+						
+						     $('#myResults td').css('border','1px solid black');
+							 $('#myResults td').css('text-align','center');
+							 $('#myResults td').css('padding','2 px');
+							 $('#myResults').css('width','100%');
+							 $('#myResults thead').css('background-color','grey');
+							 $('#myResults tr:odd').css('background-color','lightgrey');
+							 $('#myResults tr').each(function() {$(this).find('td:eq(2)').css('font-size','small'); }); 
+						
+			                
+
+myIQY = 'WEB\r\n\
+1\r\n\
+'+$.trim(window.location.href.replace(/\/q.*/gim, '/q/getPoints.php?code='+code))+'\r\n\
+\r\n\
+Selection=EntirePage\r\n\
+Formatting=None\r\n\
+PreFormattedTextToColumns=True\r\n\
+ConsecutiveDelimitersAsOne=True\r\n\
+SingleBlockTextImport=False\r\n\
+DisableDateRecognition=False\r\n\
+DisableRedirections=False\r\n';
+
+										$('#myDownloadExcel2').click(function() {
+											downloadFile('getPoints_' + code + '.iqy', myIQY);
+										});
+
+
+
+ });
+
+			
+					
+
+
+
+
+            });
+
+
+
+
 
 
             $('#clickresults').click(function() {
@@ -679,7 +802,7 @@ $('.CE').prop("contentEditable", false);
 					//alert('drin');
 					myIQY = 'WEB\r\n\
 1\r\n\
-'+$.trim(window.location.href.replace(/\/dv.*/gim, '/dv/getResults.php?code='+code))+'\r\n\
+'+$.trim(window.location.href.replace(/\/q.*/gim, '/q/getResults.php?code='+code))+'\r\n\
 \r\n\
 Selection=EntirePage\r\n\
 Formatting=None\r\n\
@@ -712,14 +835,13 @@ DisableRedirections=False\r\n';
 				saveQuestion(function(){null;});
 			});
 
-
-            $('.badge').dblclick(function() {
+          /*  $('.badge').dblclick(function() {
 
                 myinit();
                 myRestartCounter(0);
                 myStartFrage = 0;
                 myinitbody(myStartFrage);
-            });
+            });*/
 
 if ((getUrlParameter("unsetcounter"))) {
 myRestartCounter(0);
@@ -845,7 +967,7 @@ myRestartCounter(0);
 
                         $('#mymodal').modal('show');
                         $('#mymodal').find('.modal-title').html('Sie haben alle Fragen beantwortet');
-                        $('#mymodal').find('.modal-body').html('Versuche: <span class="badge" title="Versuche"><span  class=" glyphicon glyphicon-asterisk"  ></span> <span >' + myCounter + '</span></span><br/>Korrekte Antworten: <span class="badge" title="Treffer"><span class=" glyphicon glyphicon-ok"  ></span><span >' + myOK + '</span></span><br/>Falsche Antworten: <span class="badge" title="Patzer"><span class=" glyphicon glyphicon-remove" ></span><span >' + myNOK + '</span></span>');
+                        $('#mymodal').find('.modal-body').html('Gegebene Antworten: <span class="badge" title="Versuche"><span  class=" glyphicon glyphicon-asterisk"  ></span> <span >' + myCounter + '</span></span><br/>Korrekte Antworten: <span class="badge" title="Treffer"><span class=" glyphicon glyphicon-ok"  ></span><span >' + myOK + '</span></span><br/>Falsche Antworten: <span class="badge" title="Patzer"><span class=" glyphicon glyphicon-remove" ></span><span >' + myNOK + '</span></span>');
 
 
                         //<span class="badge" title="Treffer"><span class=" glyphicon glyphicon-ok"  ></span><span id="counter_ok">0</span></span>
@@ -889,11 +1011,24 @@ myRestartCounter(0);
                     $('#button_renew').prop('disabled', false);
 
                     $('#next').fadeIn(300);
-                    logAnswer('OK', myVar.fragen[myStartFrage].choicetype, myVar.fragen[myStartFrage].theme, myVar.fragen[myStartFrage].head, $('#body').find('textarea').val());
+                    logAnswer('text', myVar.fragen[myStartFrage].choicetype, myVar.fragen[myStartFrage].theme, myVar.fragen[myStartFrage].head, $('#body').find('textarea').val());
                 }
+
+
+insertPoints( myVar.fragen[myStartFrage].head, $.trim($('#body').find('[type="checkbox"]:checked').siblings('span').text()), $('#body').find('textarea').val());
+
+
                 $('#body').find('[type="checkbox"]:checked').each(function() {
 
                     // console.log($(this).val());
+
+
+
+						//if (myVar.fragen[myStartFrage].choicetype == "survey")  {$('#button_next').click();}   
+						$('#button_renew').prop('disabled', true);	
+
+
+
 
                     if (myVar.fragen[myStartFrage].solution == $(this).val() || myVar.fragen[myStartFrage].choicetype == "survey") {
                         myattr =
@@ -922,6 +1057,8 @@ myRestartCounter(0);
                 });
 
             });
+//Test, ob dadurch init-SuperUser-Problem gel�st wird
+	checkIfSuperUser();
         };
 
         //ENDE myinitButtons
@@ -969,10 +1106,18 @@ myRestartCounter(0);
             // Wenn Antwortmöglichkeiten vorgeben
             if (myVar.fragen[inFrage].elements == "text") {
                 myChoiceClass = "myHidden";
+				myElementSwitch = "text";
 
             }
             if (myVar.fragen[inFrage].elements == "choice") {
                 myTextareaClass = "myHidden";
+				myElementSwitch = "choice";
+
+            }
+			
+			  if (myVar.fragen[inFrage].elements == "both") {
+               
+				myElementSwitch = "both";
 
             }
 
@@ -1004,7 +1149,7 @@ myRestartCounter(0);
 
             myAppend = $('#body').append('<li class="list-group-item  myTextarea ' + myTextareaClass + '">\
                                 <div >\
-                                            <textarea myvalue="text" class="text" rows="2" ></textarea>\
+                                            <textarea myvalue="text" class="text" rows="2" cols="25" ></textarea>\
                                   </div>\
 								  </li>');
 								  
@@ -1156,6 +1301,7 @@ function checkIfSuperUser() {
                
                 $('#clicksorting').parent().show();
                 $('#clickresults').parent().show();
+$('#clickresults2').parent().show();
 				$('#clicksave').parent().show();
             }
 }
@@ -1178,11 +1324,11 @@ function checkIfSuperUser() {
 						
 						
 						}
-						else {
+						
 							
 						checkIfSuperUser();	
 					
-						}
+						
 		
 		
 		return myreturn;				
@@ -1407,9 +1553,11 @@ window.location.href = mytext; */
             <li role="presentation" title="Druckversion"><a href="#offlinearea" aria-controls="profile" role="tab" data-toggle="tab" id="offlineversion"><span class="glyphicon glyphicon-print" aria-hidden="true"></span></a></li>
             <li role="presentation" style="display:none" title="Sortierung der Fragen"><a href="#sorting" aria-controls="profile" role="tab" data-toggle="tab" id="clicksorting"><span class="glyphicon glyphicon-sort" aria-hidden="true"></span></a></li>
             <li role="presentation" ><a href="#linktab" aria-controls="messages" role="tab" data-toggle="tab" id="clicklink"><span class="glyphicon glyphicon-link" aria-hidden="true"></span></a></li>
-            <li role="presentation" style="display:none"><a href="#edit" aria-controls="settings" role="tab" title="Test editieren" id="clickedit"><span class="glyphicon glyphicon-pencil" mystatus="inactive" style="color:lightgrey" aria-hidden="true"></span></a></li>
+            <li role="presentation" style="display:none"><a href="#edit" aria-controls="settings" role="tab" title="Editieren/Lösungen anzeigen" id="clickedit"><span class="glyphicon glyphicon-pencil" mystatus="inactive" style="color:lightgrey" aria-hidden="true"></span></a></li>
             <li role="presentation" style="display:none"><a href="#offlinearea" aria-controls="settings" role="tab" data-toggle="tab" title="Antworten anzeigen" id="clickresults"><span class="glyphicon glyphicon-list"   aria-hidden="true"></span></a> </li>
-			<li role="presentation" style="display:none" title="Speichern"><a  aria-controls="profile" role="button"  id="clicksave"><span class="glyphicon glyphicon-floppy-disk" aria-hidden="true"></span></a></li>
+<li role="presentation" style="display:none"><a href="#offlinearea" aria-controls="settings" role="tab" data-toggle="tab" title="Punkte anzeigen" id="clickresults2"><span class="glyphicon glyphicon-list"   aria-hidden="true"></span></a> </li>
+			
+<li role="presentation" style="display:none" title="Speichern"><a  aria-controls="profile" role="button"  id="clicksave"><span class="glyphicon glyphicon-floppy-disk" aria-hidden="true"></span></a></li>
 		
 		</ul>
 
@@ -1464,7 +1612,7 @@ window.location.href = mytext; */
 
                                 </div>
                                 <div class="panel-heading myEditable">
-                                    <h3 class="panel-title" style="font-size:18px;"> <textarea id="headwrite" value="" cols="30" rows="2"> </textarea> </h3>
+                                    <h3 class="panel-title" style="font-size:18px;"> <textarea id="headwrite" value="" cols="25" rows="2"> </textarea> </h3>
 									
                                 </div>
 								<div class="CE" style="text-align:center" id="additionalHTML"></div>

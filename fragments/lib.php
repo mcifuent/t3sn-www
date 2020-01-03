@@ -51,6 +51,26 @@ class CRUD_json
 	
         return $this->db->lastInsertId();
     }
+
+
+
+
+ public function InsertPoints($session, $code, $token, $text, $points, $comment)
+    {
+       
+		$query = $this->db->prepare("INSERT INTO points(session, code, token, text, points, comment) VALUES (:session, :code, :token, :text, :points, :comment)");
+      //  $query->bindParam("first_name", $first_name, PDO::PARAM_STR);
+        $query->bindParam("code", $code, PDO::PARAM_STR);
+        $query->bindParam("text", $text, PDO::PARAM_STR);
+	$query->bindParam("session", $session, PDO::PARAM_STR);
+	$query->bindParam("token", $token, PDO::PARAM_STR);
+	$query->bindParam("points", $points, PDO::PARAM_STR);
+	$query->bindParam("comment", $comment, PDO::PARAM_STR);
+        $query->execute();
+	
+        return $this->db->lastInsertId();
+    }
+
 	
 	
 	    public function UploadFile($name, $size, $type, $content )
@@ -125,6 +145,25 @@ class CRUD_json
         }
         return $data;
     }
+
+
+		    public function getPoints($code)
+    {
+
+  $query = $this->db->prepare("SELECT id, session, token, text, points, comment, timestamp FROM points WHERE upper (code)= upper(:code) order by token, text");
+		
+		
+		$query->bindParam("code", $code, PDO::PARAM_STR);
+		$query->execute();
+        $data = array();
+        while ($row = $query->fetch(PDO::FETCH_ASSOC)) {
+            $data[] = $row;
+
+        }
+
+        return $data;
+    }
+
 	
 			    public function getAnswersByToken($code, $token)
     {

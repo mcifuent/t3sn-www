@@ -46,6 +46,7 @@ $data .="]}";
  echo '<!DOCTYPE html>
 <html lang="de"><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>'.$script.'</head><body>';
 
+echo createSubHeader($_GET['code'],$mytoken);
 echo '<table>';
 echo createTableHeader();
 
@@ -59,7 +60,9 @@ if ($myObject){
 	foreach ($myObject->data as &$value) {
 	if (isset ($mytoken) && $mytoken!=$value->token) {
 	echo('<tr><td class="noprint"></td><td class="noprint"></td><td ></td><td></td><td>Gesamtpunkte</td><td>'.$myPoints.'</td></tr>');
-	echo('</tbody></table><table>');
+	echo('</tbody></table><br/> <table>');
+	echo createTableHeader();
+	echo '<tbody>';
 	$myPoints = 0;
 }
 	echo ('<tr>');

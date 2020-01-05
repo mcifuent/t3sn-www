@@ -735,8 +735,10 @@ $('.CE').prop("contentEditable", false);
 			
 						
 						     $('.myResults td').css('border','1px solid black');
-							 $('.myResults td').css('text-align','center');
-							 $('.myResults td').css('padding','2 px');
+							 $('.myResults td').css('text-align','left');
+							 $('.myResults td').css('padding-left','2px');
+							 $('.myResults td').css('padding-right','2px');
+							 $('.myResults td').css('word-wrap','break-word');
 							 $('.myResults').css('width','100%');
 							 
 							 $('.myResults tr:odd').css('background-color','lightgrey');

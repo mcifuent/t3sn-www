@@ -1,15 +1,21 @@
 <?php
  
 require './fragments/lib.php';
+$myClassAvg["gut"]=0;
+$myClassAvg["mangelhaft"]=0;
+$myClassAvg["ungenügend"]=0;
+$myClassAvg["sehr gut"]=0;
+$myClassAvg["befriedigend"]=0;
+$myClassAvg["ausreichend"]=0;
 
 function createSubHeader($code, $token) {
 	
 	return $code. ' '.$token;
 }
 
-function createTableHeader(){
+function createTableHeader($code,$token){
 	
-	return '<thead><tr><td class="noprint">ID</td><td class="noprint">TIMESTAMP</td><td class="noprint">SESSION</td><td class="noprint">TOKEN</td><td>Aufgabe</td><td>Pkte</td><td>Kommentar</td></tr></thead>';
+	return '<thead><tr><td  colspan="10">'.$code.' '. $token.' </td><tr><tr><td class="noprint">ID</td><td class="noprint">TIMESTAMP</td><td class="noprint">SESSION</td><td class="noprint">TOKEN</td><td>Aufgabe</td><td>Pkte</td><td>Kommentar</td></tr></thead>';
 }
 
 
@@ -25,8 +31,9 @@ function getGrade($myPoints, $myMaxPoints) {
 }
 
 function createSumRow($myPoints,$myMaxPoints) {
+	$myClassAvg[getGrade($myPoints,$myMaxPoints)] = $myClassAvg[getGrade($myPoints,$myMaxPoints)] + 1;
 	
-		return '<tr><td class="noprint"></td><td class="noprint"></td><td class="noprint"></td><td class="noprint"></td><td>Gesamtpunkte</td><td>'.$myPoints.'/'.$myMaxPoints.'</td><td>'.getGrade($myPoints,$myMaxPoints).'</td>  </tr>';
+		return '<tr><td class="noprint"></td><td class="noprint"></td><td class="noprint"></td><td class="noprint"></td><td><b>Gesamtpunkte</b></td><td><b>'.$myPoints.'/'.$myMaxPoints.'</b></td><td><b>'.getGrade($myPoints,$myMaxPoints).'</b></td>  </tr>';
 }
 
 
@@ -72,6 +79,8 @@ $myObject = json_decode($data);
 $myPoints = 0;
 $myMaxPoints = 0;
 $isFirst = true;
+$myClassAvg;
+
 
 
 if ($myObject){
@@ -89,15 +98,15 @@ if ($myObject){
 	} 	
 		
 	if($isFirst == true){
-		echo createSubHeader($_GET['code'],$value->token);
+	//	echo createSubHeader();
 		echo '<table>';
-		echo createTableHeader();	
+		echo createTableHeader($_GET['code'],$value->token);	
 		echo '<tbody>';	
 		$isFirst = false;
 	}
 	
 		echo ('<tr>');
-		echo ('<td class="noprint">'.$value->id.'</td><td class="noprint">'.$value->timestamp.'</td><td class="noprint">'.$value->session.'</td><td class="noprint">'.$value->token.'</td><td>'.$value->text.'</td><td>'.$value->points.'</td><td>'.$value->comment.'</td>');
+		echo ('<td class="noprint">'.$value->id.'</td><td class="noprint">'.$value->timestamp.'</td><td class="noprint">'.$value->session.'</td><td class="noprint">'.$value->token.'</td><td>'.preg_replace('/#.*/','',$value->text).'</td><td>'.$value->points.'/'. preg_replace('/.*#/','',$value->text).'</td><td>'.$value->comment.'</td>');
 		
 		echo ('</tr>');
 		$myMaxPoints = $myMaxPoints + preg_replace('/.*#/','',$value->text);
@@ -121,6 +130,7 @@ if ($myObject){
 echo createSumRow($myPoints,$myMaxPoints);
 echo('</tbody></table>');
 
+echo  'gut: '. $myClassAvg["gut"];
 
 
  echo '</body></html>';

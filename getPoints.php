@@ -1,12 +1,22 @@
 <?php
  
 require './fragments/lib.php';
+
+function createSubHeader($code, $token) {
+	
+	return $code. ' '.$token;
+}
+
+function createTableHeader(){
+	
+	return '<thead><tr><td class="noprint">ID</td><td class="noprint">TIMESTAMP</td><td class="noprint">SESSION</td><td >TOKEN</td><td>TEXT</td><td>POINTS</td><td>COMMENT</td></tr></thead>';
+}
  
 $object = new CRUD_json();
  
  $script="";
  if (isset($_GET['timer'])) {
- $script='<script> /*alert(\' Die Seite wird alle '.$_GET['timer'].' Millisekunden neu geladen.\') ;*/ window.setInterval(function() {window.location.href=window.location.href },'.$_GET['timer'].' * 1000 );</script>';
+	$script='<script> /*alert(\' Die Seite wird alle '.$_GET['timer'].' Millisekunden neu geladen.\') ;*/ window.setInterval(function() {window.location.href=window.location.href },'.$_GET['timer'].' * 1000 );</script>';
  
  
  }
@@ -34,27 +44,31 @@ $data .="]}";
 }
 
  echo '<!DOCTYPE html>
-<html lang="de"><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>'.$script.'</head><body><table>';
-echo '<thead><tr><td class="noprint">ID</td><td class="noprint">TIMESTAMP</td><td class="noprint">SESSION</td><td >TOKEN</td><td>TEXT</td><td>POINTS</td><td>COMMENT</td></tr></thead>';
+<html lang="de"><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>'.$script.'</head><body>';
+
+echo '<table>';
+echo createTableHeader();
 
 $myObject = json_decode($data);
 
-if ($myObject){
-echo '<tbody>';
-
-foreach ($myObject->data as &$value) {
-if ($mytoken!=$value->token) {
-echo('<tr><td class="noprint"></td><td class="noprint"></td><td ></td><td></td><td>Gesamtpunkte</td><td>'.$myPoints.'</td></tr>');
-echo('<tr class="pagebreak"></tr>');
 $myPoints = 0;
+
+if ($myObject){
+	echo '<tbody>';
+
+	foreach ($myObject->data as &$value) {
+	if (isset ($mytoken) && $mytoken!=$value->token) {
+	echo('<tr><td class="noprint"></td><td class="noprint"></td><td ></td><td></td><td>Gesamtpunkte</td><td>'.$myPoints.'</td></tr>');
+	echo('</tbody></table><table>');
+	$myPoints = 0;
 }
 	echo ('<tr>');
     echo ('<td class="noprint">'.$value->id.'</td><td class="noprint">'.$value->timestamp.'</td><td class="noprint">'.$value->session.'</td><td >'.$value->token.'</td><td>'.$value->text.'</td><td>'.$value->points.'</td><td>'.$value->comment.'</td>');
 	
 	echo ('</tr>');
 
-$mytoken=$value->token;
-$myPoints = $myPoints + $value->points;
+	$mytoken=$value->token;
+	$myPoints = $myPoints + $value->points;
 
 }
 } else {
@@ -62,11 +76,11 @@ $myPoints = $myPoints + $value->points;
 }
 
 echo('<tr><td class="noprint"></td><td class="noprint"></td><td></td><td>Gesamtpunkte</td><td>'.$myPoints.'</td></tr>');
-echo('<tr class="pagebreak"></tr>');
+echo('</tbody></table>');
 
 
- echo '</tbody>';
- echo '</table></body></html>';
+
+ echo '</body></html>';
 //var_dump( $myObject->data[0]->id); 
 
 ?>

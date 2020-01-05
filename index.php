@@ -730,17 +730,18 @@ $('.CE').prop("contentEditable", false);
 						
 					$('#offlinetext').html('<a id="myDownloadExcel2" class="noprint">Excel-Verbindungsdatei</a>  ');
 						
-							$('#offlinetext').append(data.replace('<table>','<table id="myResults">'));
+							$('#offlinetext').append(data.replace(/<table>/g,'<table class="myResults">'));
 
 			
 						
-						     $('#myResults td').css('border','1px solid black');
-							 $('#myResults td').css('text-align','center');
-							 $('#myResults td').css('padding','2 px');
-							 $('#myResults').css('width','100%');
-							 $('#myResults thead').css('background-color','grey');
-							 $('#myResults tr:odd').css('background-color','lightgrey');
-							 $('#myResults tr').each(function() {$(this).find('td:eq(2)').css('font-size','small'); }); 
+						     $('.myResults td').css('border','1px solid black');
+							 $('.myResults td').css('text-align','center');
+							 $('.myResults td').css('padding','2 px');
+							 $('.myResults').css('width','100%');
+							 
+							 $('.myResults tr:odd').css('background-color','lightgrey');
+							// $('.myResults tr').each(function() {$(this).find('td:eq(2)').css('font-size','small'); }); 
+							 $('.myResults thead tr').css('background-color','grey');
 						
 			                
 

@@ -11,6 +11,11 @@ function createTableHeader(){
 	
 	return '<thead><tr><td class="noprint">ID</td><td class="noprint">TIMESTAMP</td><td class="noprint">SESSION</td><td >TOKEN</td><td>TEXT</td><td>POINTS</td><td>COMMENT</td></tr></thead>';
 }
+
+function createSumRow($myPoints,$myMaxPoints) {
+	
+		return '<tr><td class="noprint"></td><td class="noprint"></td><td ></td><td></td><td>Gesamtpunkte</td><td>'.$myPoints.'/'.$myMaxPoints.'</td></tr>';
+}
  
 $object = new CRUD_json();
  
@@ -46,39 +51,60 @@ $data .="]}";
  echo '<!DOCTYPE html>
 <html lang="de"><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>'.$script.'</head><body>';
 
-echo createSubHeader($_GET['code'],$mytoken);
-echo '<table>';
-echo createTableHeader();
+
 
 $myObject = json_decode($data);
 
 $myPoints = 0;
+$myMaxPoints = 0;
+$isFirst = true;
+$mytoken="";
 
 if ($myObject){
-	echo '<tbody>';
+	
 
 	foreach ($myObject->data as &$value) {
+		
 	if (isset ($mytoken) && $mytoken!=$value->token) {
-	echo('<tr><td class="noprint"></td><td class="noprint"></td><td ></td><td></td><td>Gesamtpunkte</td><td>'.$myPoints.'</td></tr>');
-	echo('</tbody></table><br/> <table>');
-	echo createTableHeader();
-	echo '<tbody>';
-	$myPoints = 0;
-}
-	echo ('<tr>');
-    echo ('<td class="noprint">'.$value->id.'</td><td class="noprint">'.$value->timestamp.'</td><td class="noprint">'.$value->session.'</td><td >'.$value->token.'</td><td>'.$value->text.'</td><td>'.$value->points.'</td><td>'.$value->comment.'</td>');
+		echo createSumRow($myPoints,$myMaxPoints);
 	
-	echo ('</tr>');
+		echo('</tbody></table><br/>');
+		$myPoints = 0;
+		$myMaxPoints = 0;
+		$isFirst = true;
+	} 	
+		
+	if($isFirst == true){
+		echo createSubHeader($_GET['code'],$value->token);
+		echo '<table>';
+		echo createTableHeader();	
+		echo '<tbody>';	
+		$isFirst = false;
+	}
+	
+		echo ('<tr>');
+		echo ('<td class="noprint">'.$value->id.'</td><td class="noprint">'.$value->timestamp.'</td><td class="noprint">'.$value->session.'</td><td >'.$value->token.'</td><td>'.$value->text.'</td><td>'.$value->points.'</td><td>'.$value->comment.'</td>');
+		
+		echo ('</tr>');
+		$myMaxPoints = $myMaxPoints + preg_replace('/.*#/','',$value->text);
 
-	$mytoken=$value->token;
-	$myPoints = $myPoints + $value->points;
+	
+		
+	
+	
+		$mytoken=$value->token;
+		$myPoints = $myPoints + $value->points;	
+		
+	
+
 
 }
-} else {
-	echo '<tr ><td>Keine Antworten für "'.$_GET['code'].'" vorhanden.</td></tr><tr id="pagebreak"></tr>';
-}
+	} else 
+		{
+		echo '<tr ><td>Keine Antworten für "'.$_GET['code'].'" vorhanden.</td></tr><tr id="pagebreak"></tr>';
+		}
 
-echo('<tr><td class="noprint"></td><td class="noprint"></td><td></td><td>Gesamtpunkte</td><td>'.$myPoints.'</td></tr>');
+echo createSumRow($myPoints,$myMaxPoints);
 echo('</tbody></table>');
 
 

@@ -133,7 +133,7 @@ class CRUD_json
 	
 		    public function getAnswers($code)
     {
-        $query = $this->db->prepare("SELECT id, session, token, text, timestamp FROM answers WHERE upper (code)= upper(:code) order by id desc");
+        $query = $this->db->prepare("SELECT id, session, token, text, timestamp FROM answers WHERE upper (code)= upper(:code)  order by id desc");
 		
 		//$query = $this->db->prepare("SELECT 'json' AS ORIGIN, text FROM json WHERE code= :code1 UNION (SELECT 'meta' AS ORIGIN, text FROM json WHERE code in (SELECT json_code FROM meta_json WHERE metacode =:code2))");
 		
@@ -157,8 +157,8 @@ class CRUD_json
 		$query->execute();
         $data = array();
         while ($row = $query->fetch(PDO::FETCH_ASSOC)) {
-            $data[] = $row;
-
+			
+            $data[] = preg_replace("#[\r\n\t]#",' ',str_replace('"','\"',$row));
         }
 
         return $data;

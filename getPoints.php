@@ -1,12 +1,16 @@
 <?php
- 
+
 require './fragments/lib.php';
+$myClassAvg;
 $myClassAvg["gut"]=0;
 $myClassAvg["mangelhaft"]=0;
 $myClassAvg["ungenügend"]=0;
 $myClassAvg["sehr gut"]=0;
 $myClassAvg["befriedigend"]=0;
 $myClassAvg["ausreichend"]=0;
+$myClassAvg["points"]=0;
+$myClassAvg["maxpoints"]=0;
+$myClassAvg["null"]=0;
 
 function createSubHeader($code, $token) {
 	
@@ -20,6 +24,8 @@ function createTableHeader($code,$token){
 
 
 function getGrade($myPoints, $myMaxPoints) {
+	 $myReturn="null";
+	if ($myMaxPoints > 0) {  
 	$Quotient = round($myPoints/$myMaxPoints * 100,2);
 	$myReturn="ungenügend";
 	if ($Quotient >= 30)  $myReturn="mangelhaft";
@@ -27,17 +33,21 @@ function getGrade($myPoints, $myMaxPoints) {
 	if ($Quotient >= 67)  $myReturn="befriedigend";
 	if ($Quotient >= 81)  $myReturn="gut";
 	if ($Quotient >= 92)  $myReturn="sehr gut";
+	}
 	return  $myReturn;
 }
 
 function createSumRow($myPoints,$myMaxPoints) {
+	global $myClassAvg;
 	$myClassAvg[getGrade($myPoints,$myMaxPoints)] = $myClassAvg[getGrade($myPoints,$myMaxPoints)] + 1;
-	
+	$myClassAvg["points"] = $myClassAvg["points"] + $myPoints;
+	$myClassAvg["maxpoints"] = $myClassAvg["maxpoints"] + $myMaxPoints;
+
 		return '<tr><td class="noprint"></td><td class="noprint"></td><td class="noprint"></td><td class="noprint"></td><td><b>Gesamtpunkte</b></td><td><b>'.$myPoints.'/'.$myMaxPoints.'</b></td><td><b>'.getGrade($myPoints,$myMaxPoints).'</b></td>  </tr>';
 }
 
 
- 
+
 $object = new CRUD_json();
  
  $script="";
@@ -53,13 +63,15 @@ $object = new CRUD_json();
 	  $rows = $object->getPoints($_GET['code']); 
 
  }
- 
+//print_r $rows;
  $data = '{"data":[';
 if (count($rows) > 0) {
 
     foreach ($rows as $row) {
+	//	echo '{"id":'.$row["id"]. ','.'"timestamp":"'.$row["timestamp"]. '","session":"'.$row["session"]. '","token":"'.$row["token"].'","points":"'.$row["points"].'","comment":"'.str_replace('"','\"',$row["comment"]).'","text":"'.preg_replace("#[\r\n\t]#",' ',str_replace('"','\"',$row["text"])).'"}';
+	//echo '<hr>';
           
-	$data .='{"id":'.$row["id"]. ','.'"timestamp":"'.$row["timestamp"]. '","session":"'.$row["session"]. '","token":"'.$row["token"].'","points":"'.$row["points"].'","comment":"'.str_replace('"','\"',$row["comment"]).'","text":"'.preg_replace("#[\r\n\t]#",' ',str_replace('"','\"',$row["text"])).'"}';
+	$data .='{"id":'.$row["id"]. ','.'"timestamp":"'.$row["timestamp"]. '","session":"'.$row["session"]. '","token":"'.$row["token"].'","points":"'.$row["points"].'","comment":"'.$row["comment"].'","text":"'.$row["text"].'"}';
 	
 	if($row != $rows[count($rows)-1]) {$data .=',';}
     }
@@ -68,11 +80,16 @@ $data .="]}";
     // records not found
     $data .= '<tr><td colspan="6">Records not found!</td></tr>';
 }
+/**echo '------------------------';
+echo '<hr>';
+echo $data;
+echo '<hr>';
+//echo '------------------------'; **/
 
  echo '<!DOCTYPE html>
 <html lang="de"><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>'.$script.'</head><body>';
 
-
+//echo $data;
 
 $myObject = json_decode($data);
 
@@ -128,10 +145,16 @@ if ($myObject){
 		}
 
 echo createSumRow($myPoints,$myMaxPoints);
-echo('</tbody></table>');
+echo('</tbody></table><br/>');
 
-echo  'gut: '. $myClassAvg["gut"];
-
+echo '<h1>Notenspiegel '.$_GET['code'].' </h1>';
+echo  '(1) sehr gut: '. $myClassAvg["sehr gut"].'<hr/>';
+echo  '(2) gut: '. $myClassAvg["gut"].'<hr/>';
+echo  '(3) befriedigend: '. $myClassAvg["befriedigend"].'<hr/>';
+echo  '(4) ausreichend: '. $myClassAvg["ausreichend"].'<hr/>';
+echo  '(5) mangelhaft: '. $myClassAvg["mangelhaft"].'<hr/>';
+echo  '(6) ungenügend: '. $myClassAvg["ungenügend"].'<hr/>';
+echo 'Schnitt: <b>'. getGrade($myClassAvg["points"],$myClassAvg["maxpoints"]).'</b>';
 
  echo '</body></html>';
 //var_dump( $myObject->data[0]->id); 
